@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Add Students to {{ class_obj.name }}</h1>
+    <a href="{{ url_for('classes.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">Back to Class</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Student Registration Instructions</h5>
+    </div>
+    <div class="card-body">
+        <p>Add students to your class by providing their names and face images for recognition.</p>
+        <div class="alert alert-info">
+            <h6>Guidelines for face images:</h6>
+            <ul>
+                <li>Upload multiple clear, well-lit photos of each student (1-10 images)</li>
+                <li>Photos should show the student's face clearly, preferably front-facing</li>
+                <li>Different angles and lighting conditions help improve recognition accuracy</li>
+                <li>Avoid group photos - each image should show only one face</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Student Information</h5>
+        </div>
+        <div class="card-body">
+            <div id="students-container">
+                {% for i in range(num_students if num_students else 1) %}
+                <div class="student-row border rounded p-3 mb-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label for="student_name_{{ i }}" class="form-label">Student Name</label>
+                            <input type="text" class="form-control" id="student_name_{{ i }}" name="student_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Student Photos</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_0" name="student_photo_{{ i }}_0" 
+                                        accept="image/*" required>
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_0">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_1" name="student_photo_{{ i }}_1" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_1">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional photo slots initially hidden -->
+                        <div class="row additional-photos" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_2" name="student_photo_{{ i }}_2" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_2">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_3" name="student_photo_{{ i }}_3" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_3">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row additional-photos" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_4" name="student_photo_{{ i }}_4" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_4">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_5" name="student_photo_{{ i }}_5" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_5">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row additional-photos" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_6" name="student_photo_{{ i }}_6" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_6">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_7" name="student_photo_{{ i }}_7" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_7">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row additional-photos" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_8" name="student_photo_{{ i }}_8" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_8">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="file" class="form-control student-photo-input" 
+                                        id="student_photo_{{ i }}_9" name="student_photo_{{ i }}_9" 
+                                        accept="image/*">
+                                    <button class="btn btn-outline-secondary preview-btn" type="button" 
+                                        data-preview-for="student_photo_{{ i }}_9">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center">
+                            <button type="button" class="btn btn-outline-primary show-more-photos">
+                                <i class="bi bi-plus-circle"></i> Add More Photos
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary show-less-photos ms-2" style="display: none;">
+                                <i class="bi bi-dash-circle"></i> Show Fewer Photos
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-container mt-3" style="display: none;">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Image Preview</h6>
+                                <button type="button" class="btn-close close-preview" aria-label="Close"></button>
+                            </div>
+                            <div class="card-body text-center">
+                                <img class="preview-image img-fluid rounded mb-2" style="max-height: 300px;">
+                                <div class="face-detection-status alert alert-info mt-2" style="display: none;">
+                                    Analyzing image for face detection...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">Add Students</button>
+    </div>
+</form>
+
+<!-- Image preview modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalPreviewImage" class="img-fluid rounded" style="max-height: 500px;">
+                <div id="faceDetectionResult" class="alert mt-3" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle show more/less photos buttons
+        document.querySelectorAll('.show-more-photos').forEach(button => {
+            button.addEventListener('click', function() {
+                const studentRow = this.closest('.student-row');
+                const additionalPhotos = studentRow.querySelectorAll('.additional-photos');
+                
+                // Show the next hidden set of photo inputs
+                for (const photoGroup of additionalPhotos) {
+                    if (photoGroup.style.display === 'none') {
+                        photoGroup.style.display = 'flex';
+                        break;
+                    }
+                }
+                
+                // Check if all photo groups are visible now
+                let allVisible = true;
+                for (const photoGroup of additionalPhotos) {
+                    if (photoGroup.style.display === 'none') {
+                        allVisible = false;
+                        break;
+                    }
+                }
+                
+                // Hide show-more button if all are visible
+                if (allVisible) {
+                    this.style.display = 'none';
+                }
+                
+                // Show show-less button
+                studentRow.querySelector('.show-less-photos').style.display = 'block';
+            });
+        });
+        
+        document.querySelectorAll('.show-less-photos').forEach(button => {
+            button.addEventListener('click', function() {
+                const studentRow = this.closest('.student-row');
+                const additionalPhotos = Array.from(studentRow.querySelectorAll('.additional-photos'));
+                
+                // Hide photo groups from bottom to top (reverse order)
+                for (let i = additionalPhotos.length - 1; i >= 0; i--) {
+                    if (additionalPhotos[i].style.display !== 'none') {
+                        additionalPhotos[i].style.display = 'none';
+                        break;
+                    }
+                }
+                
+                // Check if all photo groups are hidden now
+                let allHidden = true;
+                for (const photoGroup of additionalPhotos) {
+                    if (photoGroup.style.display !== 'none') {
+                        allHidden = false;
+                        break;
+                    }
+                }
+                
+                // Hide show-less button if all are hidden
+                if (allHidden) {
+                    this.style.display = 'none';
+                }
+                
+                // Show show-more button
+                studentRow.querySelector('.show-more-photos').style.display = 'block';
+            });
+        });
+        
+        // Handle image preview
+        const previewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        const modalPreviewImage = document.getElementById('modalPreviewImage');
+        const faceDetectionResult = document.getElementById('faceDetectionResult');
+        
+        document.querySelectorAll('.preview-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const inputId = this.getAttribute('data-preview-for');
+                const fileInput = document.getElementById(inputId);
+                
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        modalPreviewImage.src = e.target.result;
+                        previewModal.show();
+                        
+                        // Show loading state
+                        faceDetectionResult.textContent = 'Analyzing image for face detection...';
+                        faceDetectionResult.className = 'alert alert-info mt-3';
+                        faceDetectionResult.style.display = 'block';
+                        
+                        // Check face detection using the API
+                        checkFaceDetection(fileInput.files[0]);
+                    };
+                    
+                    reader.readAsDataURL(fileInput.files[0]);
+                }
+            });
+        });
+        
+        // Face detection preview check
+        function checkFaceDetection(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            fetch('/api/check-face', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.faces && data.faces.length > 0) {
+                        if (data.faces.length === 1) {
+                            faceDetectionResult.textContent = `✅ One face detected with ${(data.faces[0].confidence * 100).toFixed(1)}% confidence. Good for recognition!`;
+                            faceDetectionResult.className = 'alert alert-success mt-3';
+                        } else {
+                            faceDetectionResult.textContent = `⚠️ Multiple faces detected (${data.faces.length}). Please use an image with only one face.`;
+                            faceDetectionResult.className = 'alert alert-warning mt-3';
+                        }
+                    } else {
+                        faceDetectionResult.textContent = '❌ No faces detected in this image. Please use a clearer photo.';
+                        faceDetectionResult.className = 'alert alert-danger mt-3';
+                    }
+                } else {
+                    faceDetectionResult.textContent = `❌ Error: ${data.message || 'Could not process image'}`;
+                    faceDetectionResult.className = 'alert alert-danger mt-3';
+                }
+            })
+            .catch(error => {
+                faceDetectionResult.textContent = `❌ Error: ${error.message}`;
+                faceDetectionResult.className = 'alert alert-danger mt-3';
+            });
+        }
+    });
+</script>
+{% endblock %}

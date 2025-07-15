@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Teacher Dashboard</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Classes</h5>
+                <p class="card-text">Manage your classes, add/edit students, and take attendance.</p>
+                <a href="{{ url_for('classes.list_classes') }}" class="btn btn-primary">View My Classes</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Create New Class</h5>
+                <p class="card-text">Create a new class and add students with their photos.</p>
+                <a href="{{ url_for('classes.create_class') }}" class="btn btn-success">Create Class</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">My Profile</h5>
+                <p class="card-text">
+                    <strong>Username:</strong> {{ teacher.username }}<br>
+                    <strong>Email:</strong> {{ teacher.email }}<br>
+                    <strong>Joined:</strong> {{ teacher.created_at.strftime('%B %d, %Y') }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if teacher.classes %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>Recent Classes</h3>
+        <div class="list-group">
+            {% for class in teacher.classes[:5] %}
+            <a href="{{ url_for('classes.view_class', class_id=class.id) }}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ class.name }}</h5>
+                    <small>{{ class.created_at.strftime('%b %d, %Y') }}</small>
+                </div>
+                <p class="mb-1">{{ class.students|length }} students</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

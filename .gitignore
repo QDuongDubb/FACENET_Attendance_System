@@ -1,0 +1,34 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Instance folder
+instance/
+
+# Database files
+*.db
+*.sqlite3
+
+# Large model files (if needed, consider git-lfs instead)
+*.h5
+*.pb
+*.ckpt*
+
+# PyCharm files
+.idea/
+
+# VS Code files
+.vscode/
+
+# Logs
+*.log
+
+# Upload directories (except keep the directory structure)
+static/uploads/student_images/*
+!static/uploads/student_images/.gitkeep

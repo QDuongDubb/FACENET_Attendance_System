@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Create New Class</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('classes.create_class') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control") }}
+                        {% for error in form.name.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Enter the name of your class (e.g., Mathematics 101, Biology 2023, etc.)</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> A unique class code will be generated automatically. You can share this code with your students to join the class via the mobile app.
+                    </div>
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('classes.list_classes') }}">Back to My Classes</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>{{ class_obj.name }}</h2>
+            <a href="{{ url_for('classes.list_classes') }}" class="btn btn-outline-secondary">Back to Classes</a>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <div class="text-center mb-3">
+                    <h4>Class Code</h4>
+                    <div class="class-code p-3 mb-2" style="font-size: 24px; font-weight: bold; letter-spacing: 2px; background-color: #f8f9fa; border-radius: 8px;">
+                        {{ class_obj.class_code }}
+                    </div>
+                    <p class="mb-0">Share this code with your students so they can join using the mobile app</p>
+                </div>
+                <div class="d-flex justify-content-center mt-2">
+                    <button class="btn btn-sm btn-primary mx-1" onclick="copyToClipboard('{{ class_obj.class_code }}')">
+                        <i class="fas fa-copy"></i> Copy Code
+                    </button>
+                </div>
+            </div>
+            
+            <h3>Students ({{ students|length }})</h3>
+            <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i> Students will register themselves through the mobile app using the class code above.
+                You no longer need to manually add students or collect their photos.
+            </div>
+            
+            {% if students %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Last Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.id }}</td>
+                                <td>{{ student.name }}</td>
+                                <td>
+                                    {% if student.photos|length > 0 %}
+                                    <span class="badge bg-success">Registered</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.last_attendance_time|default('Never', true) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">No students have joined this class yet.</div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <a href="{{ url_for('classes.take_attendance', class_id=class_obj.id) }}" class="btn btn-success">
+                    View Attendance Records
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Class code copied to clipboard!');
+    }, function(err) {
+        console.error('Failed to copy class code: ', err);
+    });
+}
+</script>
+{% endblock %}

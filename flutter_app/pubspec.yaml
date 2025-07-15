@@ -1,0 +1,30 @@
+name: attendance_app
+description: A student attendance app using facial recognition.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"  # Cập nhật phạm vi SDK tương thích với Flutter 3.29.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0  # Nâng cấp lên phiên bản ổn định mới nhất
+  image_picker: ^1.0.4
+  camera: ^0.10.6
+  path_provider: ^2.1.1
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  cupertino_icons: ^1.0.6
+  permission_handler: ^11.0.0  # Điều chỉnh xuống phiên bản ổn định hơn
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0  # Cập nhật lên phiên bản mới hơn
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

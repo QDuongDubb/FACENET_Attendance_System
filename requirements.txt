@@ -1,0 +1,17 @@
+tensorflow==2.12.0
+Flask
+scipy
+opencv-python
+h5py
+matplotlib
+Pillow
+requests
+psutil
+flask-sqlalchemy
+flask-login
+flask-wtf
+email_validator
+mtcnn
+scikit-learn
+werkzeug
+Flask-Migrate==4.0.4

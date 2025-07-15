@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Take Attendance - {{ class_obj.name }}</h1>
+    <a href="{{ url_for('classes.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">Back to Class</a>
+</div>
+
+{% if not has_embeddings %}
+<div class="alert alert-warning">
+    <p><strong>Warning:</strong> No face embeddings found for this class. Make sure you have added students with photos first.</p>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Upload Image for Attendance</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="alert alert-info">
+                        <p><strong>Instructions:</strong> Upload an image containing student faces for attendance recognition.</p>
+                        <p>For best results, ensure that:</p>
+                        <ul>
+                            <li>Image is clear and well-lit</li>
+                            <li>Faces are clearly visible and forward-facing</li>
+                            <li>Image size is reasonable (under 5MB)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="imageUpload" class="form-label">Select Image</label>
+                        <input type="file" class="form-control" id="imageUpload" name="image" accept="image/*" required>
+                        <div class="form-text">Accepted formats: JPG, JPEG, PNG</div>
+                    </div>
+                    
+                    <div id="imagePreviewContainer" class="text-center mb-3" style="display: none;">
+                        <img id="imagePreview" class="img-fluid border rounded" style="max-height: 400px;" alt="Preview">
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" id="processButton" class="btn btn-primary">Process Image</button>
+                    </div>
+                </form>
+                
+                <div class="mt-3" id="statusMessage"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recognition Results</h5>
+                <button id="refreshAttendanceBtn" class="btn btn-sm btn-outline-primary">Refresh</button>
+            </div>
+            <div class="card-body">
+                <div id="recognitionResults">
+                    <div class="alert alert-info">
+                        Upload an image and click "Process Image" to recognize faces.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Attendance Summary</h5>
+            </div>
+            <div class="card-body">
+                <div id="attendanceSummary">
+                    <p><strong>Date:</strong> <span id="currentDate"></span></p>
+                    <p><strong>Total Students:</strong> {{ students|length }}</p>
+                    <p><strong>Present:</strong> <span id="presentCount">0</span></p>
+                    <p><strong>Absent:</strong> <span id="absentCount">{{ students|length }}</span></p>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button id="saveAttendanceButton" class="btn btn-primary" disabled>Save Attendance</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Attendance List</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceList">
+                    {% for student in students %}
+                    <tr id="student-row-{{ student.id }}">
+                        <td>{{ student.id }}</td>
+                        <td>{{ student.name }}</td>
+                        <td><span class="badge bg-secondary">Not Recorded</span></td>
+                        <td>-</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="resultImageModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Recognition Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="resultImageContainer">
+                    <!-- Result image with face boxes will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadForm = document.getElementById('uploadForm');
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const processButton = document.getElementById('processButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const recognitionResults = document.getElementById('recognitionResults');
+        const saveAttendanceButton = document.getElementById('saveAttendanceButton');
+        const resultImageContainer = document.getElementById('resultImageContainer');
+        
+        // Display current date
+        const currentDate = new Date();
+        document.getElementById('currentDate').textContent = currentDate.toLocaleDateString();
+        
+        // Attendance tracking
+        let presentStudents = new Set();
+        const totalStudents = {{ students|length }};
+        
+        // Image preview
+        imageUpload.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreviewContainer.style.display = 'none';
+            }
+        });
+        
+        // Process image for face recognition
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const imageFile = imageUpload.files[0];
+            
+            if (!imageFile) {
+                statusMessage.textContent = "Please select an image file.";
+                return;
+            }
+            
+            formData.append('image', imageFile);
+            formData.append('class_id', {{ class_obj.id }});
+            
+            // Show processing status
+            statusMessage.textContent = "Processing image... This may take a few seconds for face detection and recognition.";
+            processButton.disabled = true;
+            
+            // Send to server for recognition
+            fetch('/api/recognize', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Re-enable process button
+                processButton.disabled = false;
+                
+                if (data.success) {
+                    // Update recognition results
+                    recognitionResults.innerHTML = '';
+                    
+                    if (data.recognized && data.recognized.length > 0) {
+                        const resultsHTML = data.recognized.map(student => {
+                            // Update attendance list
+                            const row = document.getElementById(`student-row-${student.id}`);
+                            if (row) {
+                                row.cells[2].innerHTML = '<span class="badge bg-success">Present</span>';
+                                row.cells[3].textContent = new Date().toLocaleTimeString();
+                            }
+                            
+                            // Add to present students set
+                            presentStudents.add(student.id);
+                            
+                            return `
+                            <div class="alert alert-success mb-2">
+                                <strong>${student.name}</strong> recognized with ${(student.confidence * 100).toFixed(2)}% confidence
+                            </div>`;
+                        }).join('');
+                        
+                        recognitionResults.innerHTML = resultsHTML || '<div class="alert alert-warning">Found faces but could not recognize any students.</div>';
+                        
+                        // Display result image if available
+                        if (data.face_locations && data.face_locations.length > 0) {
+                            displayResultImage(imagePreview.src, data.face_locations, data.recognized);
+                        }
+                    } else {
+                        if (data.face_locations && data.face_locations.length > 0) {
+                            recognitionResults.innerHTML = `<div class="alert alert-warning">${data.face_locations.length} face(s) detected but none were recognized as students.</div>`;
+                            displayResultImage(imagePreview.src, data.face_locations, []);
+                        } else {
+                            recognitionResults.innerHTML = '<div class="alert alert-warning">No faces detected in the image.</div>';
+                        }
+                    }
+                    
+                    // Update attendance summary
+                    document.getElementById('presentCount').textContent = presentStudents.size;
+                    document.getElementById('absentCount').textContent = totalStudents - presentStudents.size;
+                    
+                    // Enable save button if at least one student is present
+                    if (presentStudents.size > 0) {
+                        saveAttendanceButton.disabled = false;
+                    }
+                    
+                    statusMessage.textContent = "Recognition complete.";
+                } else {
+                    recognitionResults.innerHTML = `<div class="alert alert-danger">${data.message || 'Recognition failed'}</div>`;
+                    statusMessage.textContent = "Recognition failed.";
+                }
+            })
+            .catch(error => {
+                processButton.disabled = false;
+                recognitionResults.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                statusMessage.textContent = "Recognition request failed.";
+            });
+        });
+        
+        // Display result image with face boxes
+        function displayResultImage(imageSrc, faceLocations, recognizedStudents) {
+            // Create a canvas to draw the image and face boxes
+            const canvas = document.createElement('canvas');
+            const image = new Image();
+            
+            image.onload = function() {
+                // Set canvas dimensions to match image
+                canvas.width = image.width;
+                canvas.height = image.height;
+                
+                // Get canvas context and draw image
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+                
+                // Draw face boxes
+                ctx.lineWidth = 3;
+                
+                faceLocations.forEach((box, index) => {
+                    const [x, y, width, height] = box;
+                    
+                    // Find if this face was recognized
+                    const recognized = recognizedStudents.find(s => s.face_index === index);
+                    
+                    // Set color based on recognition (green for recognized, red for unrecognized)
+                    ctx.strokeStyle = recognized ? '#28a745' : '#dc3545';
+                    
+                    // Draw rectangle
+                    ctx.strokeRect(x, y, width, height);
+                    
+                    // If recognized, add name label
+                    if (recognized) {
+                        // Background for text
+                        ctx.fillStyle = 'rgba(40, 167, 69, 0.8)';
+                        const textWidth = ctx.measureText(recognized.name).width + 10;
+                        ctx.fillRect(x, y - 25, textWidth, 25);
+                        
+                        // Text
+                        ctx.fillStyle = '#fff';
+                        ctx.font = '16px Arial';
+                        ctx.fillText(recognized.name, x + 5, y - 7);
+                    }
+                });
+                
+                // Display the result image
+                resultImageContainer.innerHTML = '';
+                const resultImage = document.createElement('img');
+                resultImage.src = canvas.toDataURL('image/jpeg');
+                resultImage.className = 'img-fluid border rounded';
+                resultImageContainer.appendChild(resultImage);
+                
+                // Show the modal with result
+                new bootstrap.Modal(document.getElementById('resultImageModal')).show();
+            };
+            
+            image.src = imageSrc;
+        }
+        
+        // Save attendance
+        saveAttendanceButton.addEventListener('click', function() {
+            statusMessage.textContent = "Saving attendance...";
+            saveAttendanceButton.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('class_id', {{ class_obj.id }});
+            formData.append('present_students', JSON.stringify(Array.from(presentStudents)));
+            formData.append('date', currentDate.toISOString().split('T')[0]);
+            
+            fetch('/api/save-attendance', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusMessage.textContent = "Attendance saved successfully.";
+                    recognitionResults.innerHTML += `<div class="alert alert-info mt-2">${data.message || 'Attendance records saved.'}</div>`;
+                } else {
+                    statusMessage.textContent = "Failed to save attendance: " + data.message;
+                    saveAttendanceButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                statusMessage.textContent = "Error saving attendance: " + error.message;
+                saveAttendanceButton.disabled = false;
+            });
+        });
+
+        // Function to refresh attendance data
+        function refreshAttendanceData() {
+            $.ajax({
+                url: "{{ url_for('api.get_attendance_data', class_id=class_obj.id) }}",
+                type: "GET",
+                success: function(response) {
+                    if(response.success) {
+                        // Update the attendance data display
+                        updateAttendanceDisplay(response.attendance);
+                    }
+                },
+                error: function(xhr) {
+                    console.error("Error fetching attendance data:", xhr.responseText);
+                }
+            });
+        }
+        
+        // Function to update the attendance display
+        function updateAttendanceDisplay(attendanceData) {
+            const resultsDiv = $("#recognitionResults");
+            resultsDiv.empty();
+            
+            if (attendanceData && attendanceData.length > 0) {
+                const attendanceList = $("<div class='list-group'></div>");
+                
+                attendanceData.forEach(function(entry) {
+                    // Convert UTC timestamp to local time for display
+                    // Making sure timestamp is treated as UTC if it doesn't include timezone info
+                    let timeString = "N/A";
+                    if (entry.timestamp) {
+                        const utcTimestamp = entry.timestamp.endsWith('Z') ? 
+                            entry.timestamp : entry.timestamp + 'Z';
+                        // Create date object from UTC timestamp
+                        const utcDate = new Date(utcTimestamp);
+                        // Add 7 hours to convert to UTC+7 timezone
+                        const localTime = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000));
+                        timeString = localTime.toLocaleString();
+                    }
+                    
+                    const statusClass = entry.status ? "text-success" : "text-danger";
+                    const status = entry.status ? "Present" : "Absent";
+                    
+                    const item = $(`
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">${entry.student_name}</h5>
+                                <small class="${statusClass}">${status}</small>
+                            </div>
+                            <p class="mb-1">Time: ${timeString}</p>
+                        </div>
+                    `);
+                    
+                    attendanceList.append(item);
+                });
+                
+                resultsDiv.append(attendanceList);
+            } else {
+                resultsDiv.html("<p class='text-muted'>No attendance records for today.</p>");
+            }
+        }
+
+        // Initial load of attendance data
+        refreshAttendanceData();
+        
+        // Set interval for auto-refresh
+        const refreshInterval = 30000; // 30 seconds
+        setInterval(refreshAttendanceData, refreshInterval);
+        
+        // Manual refresh button
+        $("#refreshAttendanceBtn").on("click", function() {
+            refreshAttendanceData();
+        });
+    });
+</script>
+{% endblock %}
