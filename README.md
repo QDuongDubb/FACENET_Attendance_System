@@ -64,6 +64,7 @@ python run.py
 
 - Python 3.6+
 - Flask - Web framework
+- FLutter - Mobile framework
 - TensorFlow - For FaceNet model
 - MTCNN - For face detection
 - OpenCV - For image processing
